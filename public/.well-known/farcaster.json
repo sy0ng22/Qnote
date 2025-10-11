@@ -1,4 +1,9 @@
 {
+  "accountAssociation": {
+    "header": "eyJmaWQiOjExMDcyNzAsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHg2ZWU0YzgxNUYyREUzQzA5YjgxRTFFNTE0NkJFN2MxOTQ5RjFFNmUwIn0",
+    "payload": "eyJkb21haW4iOiJxbm90ZS10d28udmVyY2VsLmFwcCJ9",
+    "signature": "MHgzNzM2YzgyMGRkYzI4OTBkZWQwYmE3N2E5NzdlZTg2ZDM3YzM3OGI2NzcwMjE3NTI3Yzg2Nzk5ZTg5ZmE4YzcyM2MxNTI5Mzk4MDUwYTJmYTQ1Mzg1MjAyNjUyNDUzZmFlNTEwZjgwMDQ3ZTkxYjVjNWVjMjY2NDcxY2NhYzlkNTFi"
+  },
   "frame": {
     "version": "1",
     "name": "Qnote",
@@ -10,4 +15,3 @@
     "splashBackgroundColor": "#F5F5F7"
   }
 }
-
