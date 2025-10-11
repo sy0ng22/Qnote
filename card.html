@@ -156,10 +156,8 @@
         const appUrl = import.meta.env.VITE_APP_URL || 'https://qnote-two.vercel.app';
         const cardUrl = `${appUrl}/api/card-view?date=${currentData.date}&answer=${encodeURIComponent(currentData.text)}`;
         
-        // Include URL in text for automatic link preview - URL at the beginning for better detection
-        const shareText = `${cardUrl}
-
-Daily Question 🌿
+        // Share text without URL (URL will be in embeds)
+        const shareText = `Daily Question 🌿
 ${currentData.question}
 → ${currentData.text}
 
@@ -168,9 +166,10 @@ ${currentData.question}
         console.log('Share text:', shareText);
         console.log('Card URL:', cardUrl);
 
-        // Build Warpcast composer URL with text
+        // Build Warpcast composer URL with text and embeds
         const params = new URLSearchParams({
-          text: shareText
+          text: shareText,
+          'embeds[]': cardUrl
         });
         
         const composeUrl = `https://warpcast.com/~/compose?${params.toString()}`;
@@ -187,9 +186,9 @@ ${currentData.question}
           }, 1000);
         } else {
           console.log('Popup blocked, copying to clipboard');
-          // Popup blocked - copy to clipboard
-          await navigator.clipboard.writeText(shareText);
-          statusMessage.textContent = '⚠️ Popup blocked. Text and link copied to clipboard.\nPlease paste it on Farcaster.';
+          // Popup blocked - copy link to clipboard
+          await navigator.clipboard.writeText(cardUrl);
+          statusMessage.textContent = '⚠️ Popup blocked. Link copied to clipboard.\nPlease paste it on Farcaster to share your card.';
           statusMessage.className = 'error';
           statusMessage.style.display = 'block';
         }
@@ -197,19 +196,12 @@ ${currentData.question}
       } catch (error) {
         console.error('Share failed:', error);
         
-        // Fallback: copy to clipboard
+        // Fallback: copy link to clipboard
         try {
           const appUrl = import.meta.env.VITE_APP_URL || 'https://qnote-two.vercel.app';
           const cardUrl = `${appUrl}/api/card-view?date=${currentData.date}&answer=${encodeURIComponent(currentData.text)}`;
-          const fallbackText = `${cardUrl}
-
-Daily Question 🌿
-${currentData.question}
-→ ${currentData.text}
-
-#Qnote #DailyQuestion DQ:${currentData.date}`;
-          await navigator.clipboard.writeText(fallbackText);
-          statusMessage.textContent = 'Text and link copied to clipboard. Please paste it on Farcaster.';
+          await navigator.clipboard.writeText(cardUrl);
+          statusMessage.textContent = 'Link copied to clipboard! Please paste it on Farcaster to share your card.';
           statusMessage.className = 'success';
           statusMessage.style.display = 'block';
         } catch (clipboardError) {
