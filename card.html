@@ -156,44 +156,39 @@
         const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
         const cardUrl = `${appUrl}/card-view.html?date=${currentData.date}`;
         
+        // Include URL in text for automatic link preview
         const shareText = `Daily Question 🌿
 ${currentData.question}
 → ${currentData.text}
 
-#Qnote #DailyQuestion DQ:${currentData.date}`;
+#Qnote #DailyQuestion DQ:${currentData.date}
+
+${cardUrl}`;
         
         console.log('Share text:', shareText);
         console.log('Card URL:', cardUrl);
 
-        // Build Warpcast composer URL with text and embeds
-        const params = new URLSearchParams();
-        params.append('text', shareText);
-        params.append('embeds[]', cardUrl);
+        // Build Warpcast composer URL with text
+        const params = new URLSearchParams({
+          text: shareText
+        });
         
         const composeUrl = `https://warpcast.com/~/compose?${params.toString()}`;
         console.log('Full compose URL:', composeUrl);
         
-        const width = 600;
-        const height = 800;
-        const left = Math.max(0, (window.screen.width - width) / 2);
-        const top = Math.max(0, (window.screen.height - height) / 2);
+        // Open in new tab (not popup window)
+        const newTab = window.open(composeUrl, '_blank');
         
-        const newWindow = window.open(
-          composeUrl, 
-          '_blank',
-          `width=${width},height=${height},left=${left},top=${top}`
-        );
-        
-        if (newWindow) {
-          console.log('Window opened successfully');
-          // Redirect to home after 2 seconds
+        if (newTab) {
+          console.log('Tab opened successfully');
+          // Redirect to home after 1 second
           setTimeout(() => {
             location.href = '/';
-          }, 2000);
+          }, 1000);
         } else {
           console.log('Popup blocked, copying to clipboard');
           // Popup blocked - copy to clipboard
-          await navigator.clipboard.writeText(`${shareText}\n\n${cardUrl}`);
+          await navigator.clipboard.writeText(shareText);
           statusMessage.textContent = '⚠️ Popup blocked. Text and link copied to clipboard.\nPlease paste it on Farcaster.';
           statusMessage.className = 'error';
           statusMessage.style.display = 'block';
@@ -206,8 +201,14 @@ ${currentData.question}
         try {
           const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
           const cardUrl = `${appUrl}/card-view.html?date=${currentData.date}`;
-          const shareText = generateShareText(currentData.question, currentData.text, currentData.date);
-          await navigator.clipboard.writeText(`${shareText}\n\n${cardUrl}`);
+          const fallbackText = `Daily Question 🌿
+${currentData.question}
+→ ${currentData.text}
+
+#Qnote #DailyQuestion DQ:${currentData.date}
+
+${cardUrl}`;
+          await navigator.clipboard.writeText(fallbackText);
           statusMessage.textContent = 'Text and link copied to clipboard. Please paste it on Farcaster.';
           statusMessage.className = 'success';
           statusMessage.style.display = 'block';
