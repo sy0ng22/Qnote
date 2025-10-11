@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Qnote - Daily Question</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- App Header -->
+    <header class="app-header">
+      <h1 class="app-title">Daily Question</h1>
+      <p class="app-subtitle">A moment to reflect, once a day</p>
+    </header>
+
+    <!-- Date -->
+    <div class="date-display" id="dateDisplay">
+      October 11, 2025 Saturday
+    </div>
+
+    <!-- Main Content -->
+    <main class="content">
+      <!-- Question Section -->
+      <section class="question-section">
+        <div class="section-label">TODAY'S QUESTION</div>
+        <div class="question-text" id="questionText">When was your most peaceful moment?</div>
+      </section>
+
+      <!-- Answer Input Section -->
+      <section class="input-section">
+        <label class="input-label" for="answerInput">Your Answer</label>
+        <textarea 
+          class="textarea" 
+          id="answerInput" 
+          placeholder="Write freely..."
+          maxlength="500"
+        ></textarea>
+        <div class="char-counter">
+          <span id="charCount">0</span> / 500
+        </div>
+      </section>
+
+      <!-- Action Button -->
+      <button class="button" id="nextButton" disabled>
+        Create Card →
+      </button>
+    </main>
+  </div>
+
+  <script type="module">
+    import dayjs from 'dayjs';
+    import { getTodayQuestion } from '/questions.js';
+    import { saveAnswer, loadAnswer } from '/utils.js';
+
+    const dateDisplay = document.getElementById('dateDisplay');
+    const questionText = document.getElementById('questionText');
+    const answerInput = document.getElementById('answerInput');
+    const charCount = document.getElementById('charCount');
+    const nextButton = document.getElementById('nextButton');
+
+    // Get today's date and question
+    const { question, date } = getTodayQuestion();
+    
+    // Display date
+    dateDisplay.textContent = dayjs(date).format('MMMM D, YYYY dddd');
+    
+    // Display question
+    questionText.textContent = question;
+
+    // Load previously saved answer
+    const savedData = loadAnswer(date);
+    if (savedData && savedData.text) {
+      answerInput.value = savedData.text;
+      updateCharCount();
+    }
+
+    // Update character count
+    function updateCharCount() {
+      const count = answerInput.value.length;
+      charCount.textContent = count;
+      nextButton.disabled = count === 0;
+    }
+
+    answerInput.addEventListener('input', updateCharCount);
+
+    // Next step
+    nextButton.addEventListener('click', () => {
+      const answer = answerInput.value.trim();
+      
+      if (!answer) {
+        alert('Please enter your answer.');
+        return;
+      }
+
+      // Save data
+      const data = {
+        question,
+        text: answer,
+        date
+      };
+
+      saveAnswer(date, data);
+
+      // Go to card creation page
+      location.href = '/card.html';
+    });
+
+    // Initial state check
+    updateCharCount();
+  </script>
+</body>
+</html>

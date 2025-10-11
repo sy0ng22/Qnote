@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>This Week - Qnote</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Navigation -->
+    <nav class="nav-bar">
+      <button class="nav-button" onclick="location.href='/'">← Home</button>
+      <button class="nav-button" id="refreshButton">Refresh</button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="content">
+      <!-- Week Header -->
+      <header class="week-header">
+        <h2 class="week-title">This Week's Records</h2>
+        <p class="week-subtitle">Fill in one by one ✨</p>
+      </header>
+
+      <!-- Loading -->
+      <div id="loading" class="loading">
+        Loading data...
+      </div>
+
+      <!-- Week Grid -->
+      <div class="week-grid" id="weekGrid" style="display: none;">
+        <!-- Will be filled by JavaScript -->
+      </div>
+
+      <!-- Info -->
+      <div class="info-box" id="infoBox" style="display: none;">
+        <strong>💡 Weekly Board Guide</strong><br>
+        • Locally saved answers are displayed first<br>
+        • Click on empty spaces for today or past dates to write an answer<br>
+        • Click on dates with answers to view details
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import dayjs from 'dayjs';
+    import { getWeekDates, loadAnswer } from '/utils.js';
+
+    // Set English locale
+    dayjs.locale('en');
+
+    const loading = document.getElementById('loading');
+    const weekGrid = document.getElementById('weekGrid');
+    const infoBox = document.getElementById('infoBox');
+    const refreshButton = document.getElementById('refreshButton');
+
+    let weekData = [];
+
+    // Load weekly data
+    async function loadWeekData() {
+      loading.style.display = 'block';
+      weekGrid.style.display = 'none';
+      infoBox.style.display = 'none';
+      weekGrid.innerHTML = '';
+
+      const dates = getWeekDates();
+      weekData = dates.map(dateInfo => {
+        const localData = loadAnswer(dateInfo.date);
+        return {
+          ...dateInfo,
+          data: localData,
+          source: localData ? 'local' : null
+        };
+      });
+
+      renderWeekGrid();
+    }
+
+    // Render week grid
+    function renderWeekGrid() {
+      loading.style.display = 'none';
+      weekGrid.style.display = 'grid';
+      infoBox.style.display = 'block';
+
+      const today = dayjs().format('YYYY-MM-DD');
+
+      weekData.forEach(item => {
+        const dayEl = document.createElement('div');
+        dayEl.className = 'week-day';
+
+        if (item.isToday) {
+          dayEl.classList.add('today');
+        }
+
+        // Day label
+        const labelEl = document.createElement('div');
+        labelEl.className = 'day-label';
+        labelEl.textContent = item.dayName;
+        dayEl.appendChild(labelEl);
+
+        // Day number
+        const numEl = document.createElement('div');
+        numEl.className = 'day-num';
+        numEl.textContent = item.dayNum;
+        dayEl.appendChild(numEl);
+
+        if (item.data) {
+          // Show indicator if answer exists
+          const indicatorEl = document.createElement('div');
+          indicatorEl.className = 'day-indicator';
+          dayEl.appendChild(indicatorEl);
+
+          dayEl.style.cursor = 'pointer';
+          dayEl.addEventListener('click', () => showDetail(item));
+        } else {
+          // Empty space
+          dayEl.classList.add('empty');
+
+          // Allow writing for today or past dates
+          if (item.date <= today) {
+            dayEl.style.cursor = 'pointer';
+            dayEl.addEventListener('click', () => {
+              location.href = '/';
+            });
+          }
+        }
+
+        weekGrid.appendChild(dayEl);
+      });
+    }
+
+    // Show details (modal or alert)
+    function showDetail(item) {
+      if (!item.data) return;
+
+      const message = `📅 ${dayjs(item.date).format('MMMM D, YYYY')}\n\n❓ ${item.data.question}\n\n💬 ${item.data.text}`;
+      alert(message);
+    }
+
+    // Refresh button
+    refreshButton.addEventListener('click', loadWeekData);
+
+    // Load on page load
+    loadWeekData();
+  </script>
+</body>
+</html>

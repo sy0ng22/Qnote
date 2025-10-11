@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Card Created - Qnote</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Navigation -->
+    <nav class="nav-bar">
+      <button class="nav-button" onclick="location.href='/'">← Back</button>
+      <div style="flex: 1;"></div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="content">
+      <!-- Card Title -->
+      <h2 class="card-title">Generated Card</h2>
+
+      <!-- Card Preview -->
+      <div class="card-preview">
+        <div class="preview-card" id="cardPreview">
+          <div class="preview-date" id="previewDate">October 11, 2025</div>
+          <div class="preview-label">TODAY'S QUESTION</div>
+          <div class="preview-question" id="previewQuestion">When was your most peaceful moment?</div>
+          <div class="preview-answer-label">Your Answer</div>
+          <div class="preview-answer" id="previewAnswer">Write freely...</div>
+          <div class="preview-footer">🌿 Qnote</div>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div id="statusMessage" style="display: none;"></div>
+
+      <!-- Action Buttons -->
+      <div class="button-group">
+        <button class="button" id="shareButton">
+          <svg class="share-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+          </svg>
+          Share on Farcaster
+        </button>
+        <button class="button button-secondary" id="nftButton">
+          <svg class="share-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          Mint as NFT
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import html2canvas from 'html2canvas';
+    import dayjs from 'dayjs';
+    import sdk from '@farcaster/frame-sdk';
+    import { loadAnswer, saveAnswer, generateShareText } from '/utils.js';
+    import { getTodayQuestion } from '/questions.js';
+
+    // Set English locale
+    dayjs.locale('en');
+
+    const cardPreview = document.getElementById('cardPreview');
+    const previewDate = document.getElementById('previewDate');
+    const previewQuestion = document.getElementById('previewQuestion');
+    const previewAnswer = document.getElementById('previewAnswer');
+    const statusMessage = document.getElementById('statusMessage');
+    const shareButton = document.getElementById('shareButton');
+    const nftButton = document.getElementById('nftButton');
+
+    let currentData = null;
+    let isGenerating = false;
+
+    // Load data
+    function loadData() {
+      const { date } = getTodayQuestion();
+      const data = loadAnswer(date);
+
+      if (!data || !data.text) {
+        alert('No saved answer found. Please write an answer first.');
+        location.href = '/';
+        return;
+      }
+
+      currentData = data;
+      
+      // Update card preview
+      previewDate.textContent = dayjs(data.date).format('MMMM D, YYYY');
+      previewQuestion.textContent = data.question;
+      previewAnswer.textContent = data.text;
+    }
+
+    // Generate card image
+    async function generateCard() {
+      if (isGenerating) return null;
+      
+      try {
+        isGenerating = true;
+        statusMessage.textContent = 'Generating card...';
+        statusMessage.className = 'loading';
+        statusMessage.style.display = 'block';
+        
+        shareButton.disabled = true;
+        nftButton.disabled = true;
+
+        const canvas = await html2canvas(cardPreview, {
+          backgroundColor: '#FFFFFF',
+          scale: 2,
+          logging: false,
+          width: cardPreview.offsetWidth,
+          height: cardPreview.offsetHeight
+        });
+
+        const imgUrl = canvas.toDataURL('image/png');
+
+        // Save image URL
+        currentData.imgUrl = imgUrl;
+        saveAnswer(currentData.date, currentData);
+
+        statusMessage.style.display = 'none';
+        return imgUrl;
+      } catch (error) {
+        console.error('Card generation failed:', error);
+        statusMessage.textContent = 'Failed to generate card. Please try again.';
+        statusMessage.className = 'error';
+        throw error;
+      } finally {
+        isGenerating = false;
+        shareButton.disabled = false;
+        nftButton.disabled = false;
+      }
+    }
+
+    // Share on Farcaster button
+    shareButton.addEventListener('click', async () => {
+      try {
+        shareButton.disabled = true;
+        shareButton.innerHTML = 'Preparing...';
+
+        // Generate image if not exists
+        if (!currentData.imgUrl) {
+          statusMessage.textContent = 'Generating card...';
+          statusMessage.className = 'loading';
+          statusMessage.style.display = 'block';
+          await generateCard();
+        }
+
+        // Show opening message
+        statusMessage.textContent = '✓ Opening Farcaster...';
+        statusMessage.className = 'success';
+        statusMessage.style.display = 'block';
+
+        // Generate share text with card URL
+        const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+        const cardUrl = `${appUrl}/card-view.html?date=${currentData.date}`;
+        
+        const shareText = `Daily Question 🌿
+${currentData.question}
+→ ${currentData.text}
+
+#Qnote #DailyQuestion DQ:${currentData.date}`;
+        
+        console.log('Share text:', shareText);
+        console.log('Card URL:', cardUrl);
+
+        // Build Warpcast composer URL with text and embeds
+        const params = new URLSearchParams();
+        params.append('text', shareText);
+        params.append('embeds[]', cardUrl);
+        
+        const composeUrl = `https://warpcast.com/~/compose?${params.toString()}`;
+        console.log('Full compose URL:', composeUrl);
+        
+        const width = 600;
+        const height = 800;
+        const left = Math.max(0, (window.screen.width - width) / 2);
+        const top = Math.max(0, (window.screen.height - height) / 2);
+        
+        const newWindow = window.open(
+          composeUrl, 
+          '_blank',
+          `width=${width},height=${height},left=${left},top=${top}`
+        );
+        
+        if (newWindow) {
+          console.log('Window opened successfully');
+          // Redirect to home after 2 seconds
+          setTimeout(() => {
+            location.href = '/';
+          }, 2000);
+        } else {
+          console.log('Popup blocked, copying to clipboard');
+          // Popup blocked - copy to clipboard
+          await navigator.clipboard.writeText(`${shareText}\n\n${cardUrl}`);
+          statusMessage.textContent = '⚠️ Popup blocked. Text and link copied to clipboard.\nPlease paste it on Farcaster.';
+          statusMessage.className = 'error';
+          statusMessage.style.display = 'block';
+        }
+
+      } catch (error) {
+        console.error('Share failed:', error);
+        
+        // Fallback: copy to clipboard
+        try {
+          const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+          const cardUrl = `${appUrl}/card-view.html?date=${currentData.date}`;
+          const shareText = generateShareText(currentData.question, currentData.text, currentData.date);
+          await navigator.clipboard.writeText(`${shareText}\n\n${cardUrl}`);
+          statusMessage.textContent = 'Text and link copied to clipboard. Please paste it on Farcaster.';
+          statusMessage.className = 'success';
+          statusMessage.style.display = 'block';
+        } catch (clipboardError) {
+          statusMessage.textContent = 'Failed to share. Please try again.';
+          statusMessage.className = 'error';
+          statusMessage.style.display = 'block';
+        }
+      } finally {
+        shareButton.disabled = false;
+        shareButton.innerHTML = `
+          <svg class="share-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+          </svg>
+          Share on Farcaster
+        `;
+      }
+    });
+
+    // Mint NFT button
+    nftButton.addEventListener('click', () => {
+      statusMessage.textContent = 'NFT minting feature coming soon! 🎉';
+      statusMessage.className = 'success';
+      statusMessage.style.display = 'block';
+      
+      setTimeout(() => {
+        statusMessage.style.display = 'none';
+      }, 3000);
+    });
+
+    // Load data on page load
+    loadData();
+
+    // Auto-generate card if not exists
+    if (currentData && !currentData.imgUrl) {
+      generateCard();
+    }
+  </script>
+</body>
+</html>

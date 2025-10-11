@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Qnote">
+  <meta property="og:title" content="Daily Question" id="ogTitle">
+  <meta property="og:description" content="Daily Question Card" id="ogDescription">
+  <meta property="og:image" content="" id="ogImage">
+  <meta name="twitter:card" content="summary_large_image">
+  <title>Qnote Card</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Navigation -->
+    <nav class="nav-bar">
+      <button class="nav-button" onclick="location.href='/'">← Home</button>
+      <div class="nav-title">View Card</div>
+      <button class="nav-button" onclick="location.href='/week.html'">Week</button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="content">
+      <div id="loading" class="loading">Loading card...</div>
+      
+      <div id="cardContainer" style="display: none;">
+        <!-- Card Preview -->
+        <div class="card-preview">
+          <img id="cardImage" style="width: 100%; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);" />
+        </div>
+
+        <!-- Info -->
+        <div style="margin-top: 24px; padding: 16px; background: var(--bg-secondary); border-radius: 12px;">
+          <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">
+            📅 <span id="displayDate"></span>
+          </div>
+          <div style="font-size: 16px; font-weight: 600; margin-bottom: 8px;" id="displayQuestion">
+          </div>
+          <div style="font-size: 14px; color: var(--text-secondary);" id="displayAnswer">
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div style="margin-top: 24px;">
+          <button class="button" onclick="location.href='/'">
+            Answer Today's Question ✍️
+          </button>
+        </div>
+      </div>
+
+      <div id="notFound" style="display: none;">
+        <div class="error">
+          Card not found.
+        </div>
+        <button class="button" onclick="location.href='/'">
+          Back to Home
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import dayjs from 'dayjs';
+    import { loadAnswer } from '/utils.js';
+    import { getQuestionForDate } from '/questions.js';
+
+    // Set English locale
+    dayjs.locale('en');
+
+    const loading = document.getElementById('loading');
+    const cardContainer = document.getElementById('cardContainer');
+    const notFound = document.getElementById('notFound');
+    const cardImage = document.getElementById('cardImage');
+    const displayDate = document.getElementById('displayDate');
+    const displayQuestion = document.getElementById('displayQuestion');
+    const displayAnswer = document.getElementById('displayAnswer');
+
+    // Get date parameter from URL (e.g., ?date=2025-10-11)
+    const urlParams = new URLSearchParams(window.location.search);
+    const dateParam = urlParams.get('date');
+
+    function loadCard() {
+      if (!dateParam) {
+        // If no date, use today's date
+        const today = new Date().toISOString().split('T')[0];
+        window.location.href = `?date=${today}`;
+        return;
+      }
+
+      const data = loadAnswer(dateParam);
+
+      if (data && data.imgUrl) {
+        // Display data if exists
+        cardImage.src = data.imgUrl;
+        displayDate.textContent = dayjs(data.date).format('MMMM D, YYYY');
+        displayQuestion.textContent = data.question;
+        displayAnswer.textContent = data.text;
+
+        // Update OG tags
+        document.getElementById('ogTitle').setAttribute('content', `Qnote - ${dayjs(data.date).format('MMMM D, YYYY')}`);
+        document.getElementById('ogDescription').setAttribute('content', data.question);
+        
+        loading.style.display = 'none';
+        cardContainer.style.display = 'block';
+      } else {
+        // Show 404 if data doesn't exist
+        loading.style.display = 'none';
+        notFound.style.display = 'block';
+
+        // Still show question (date-based)
+        const question = getQuestionForDate(dateParam);
+        if (question) {
+          notFound.innerHTML = `
+            <div style="padding: 24px; background: var(--bg-secondary); border-radius: 12px; margin-bottom: 24px;">
+              <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">
+                Question for ${dayjs(dateParam).format('MMMM D, YYYY')}
+              </div>
+              <div style="font-size: 20px; font-weight: 600;">
+                ${question}
+              </div>
+            </div>
+            <div style="text-align: center; color: var(--text-secondary); margin-bottom: 24px;">
+              No answer has been written for this date yet.
+            </div>
+            <button class="button" onclick="location.href='/'">
+              Answer Today's Question ✍️
+            </button>
+          `;
+        }
+      }
+    }
+
+    loadCard();
+  </script>
+</body>
+</html>
