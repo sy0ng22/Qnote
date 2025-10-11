@@ -1,0 +1,21 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="120" fill="#1d1d1f"/>
+  
+  <!-- Main Circle -->
+  <circle cx="256" cy="230" r="140" fill="none" stroke="#F5F5F7" stroke-width="24"/>
+  
+  <!-- Question Mark Stem -->
+  <path d="M 256 180 Q 290 180 310 200 Q 330 220 330 250 Q 330 270 315 285 Q 300 300 256 310" 
+        fill="none" stroke="#F5F5F7" stroke-width="24" stroke-linecap="round"/>
+  
+  <!-- Question Mark Dot -->
+  <circle cx="256" cy="340" r="16" fill="#F5F5F7"/>
+  
+  <!-- Leaf accent -->
+  <path d="M 390 380 Q 410 360 420 390 Q 410 410 390 400 Q 400 385 390 380" 
+        fill="#86B39E" opacity="0.8"/>
+  <path d="M 390 390 L 410 375" 
+        stroke="#86B39E" stroke-width="2" opacity="0.8"/>
+</svg>
+
