@@ -1,0 +1,13 @@
+{
+  "frame": {
+    "version": "1",
+    "name": "Qnote",
+    "iconUrl": "https://qnote-two.vercel.app/og-image.svg",
+    "homeUrl": "https://qnote-two.vercel.app",
+    "imageUrl": "https://qnote-two.vercel.app/og-image.svg",
+    "buttonTitle": "Launch Qnote",
+    "splashImageUrl": "https://qnote-two.vercel.app/og-image.svg",
+    "splashBackgroundColor": "#F5F5F7"
+  }
+}
+
