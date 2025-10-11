@@ -156,14 +156,14 @@
         const appUrl = import.meta.env.VITE_APP_URL || 'https://qnote-two.vercel.app';
         const cardUrl = `${appUrl}/api/card-view?date=${currentData.date}&answer=${encodeURIComponent(currentData.text)}`;
         
-        // Include URL in text for automatic link preview
-        const shareText = `Daily Question 🌿
+        // Include URL in text for automatic link preview - URL at the beginning for better detection
+        const shareText = `${cardUrl}
+
+Daily Question 🌿
 ${currentData.question}
 → ${currentData.text}
 
-#Qnote #DailyQuestion DQ:${currentData.date}
-
-${cardUrl}`;
+#Qnote #DailyQuestion DQ:${currentData.date}`;
         
         console.log('Share text:', shareText);
         console.log('Card URL:', cardUrl);
@@ -201,13 +201,13 @@ ${cardUrl}`;
         try {
           const appUrl = import.meta.env.VITE_APP_URL || 'https://qnote-two.vercel.app';
           const cardUrl = `${appUrl}/api/card-view?date=${currentData.date}&answer=${encodeURIComponent(currentData.text)}`;
-          const fallbackText = `Daily Question 🌿
+          const fallbackText = `${cardUrl}
+
+Daily Question 🌿
 ${currentData.question}
 → ${currentData.text}
 
-#Qnote #DailyQuestion DQ:${currentData.date}
-
-${cardUrl}`;
+#Qnote #DailyQuestion DQ:${currentData.date}`;
           await navigator.clipboard.writeText(fallbackText);
           statusMessage.textContent = 'Text and link copied to clipboard. Please paste it on Farcaster.';
           statusMessage.className = 'success';
