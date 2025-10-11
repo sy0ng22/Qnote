@@ -70,13 +70,6 @@
     // Display question
     questionText.textContent = question;
 
-    // Load previously saved answer
-    const savedData = loadAnswer(date);
-    if (savedData && savedData.text) {
-      answerInput.value = savedData.text;
-      updateCharCount();
-    }
-
     // Update character count
     function updateCharCount() {
       const count = answerInput.value.length;
