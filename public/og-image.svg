@@ -1,0 +1,34 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap');
+    </style>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#F5F5F7"/>
+  
+  <!-- Content Container -->
+  <rect x="80" y="80" width="1040" height="470" fill="white" rx="24"/>
+  
+  <!-- Logo/Title -->
+  <text x="120" y="160" font-family="Inter, system-ui, -apple-system" font-size="48" font-weight="700" fill="#1d1d1f">
+    Qnote
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="120" y="210" font-family="Inter, system-ui, -apple-system" font-size="24" font-weight="400" fill="#86868b">
+    Daily Question · Answer · Share
+  </text>
+  
+  <!-- Decorative Element -->
+  <circle cx="120" cy="400" r="8" fill="#007AFF"/>
+  <circle cx="160" cy="400" r="8" fill="#34C759"/>
+  <circle cx="200" cy="400" r="8" fill="#FF9500"/>
+  
+  <!-- Call to action -->
+  <text x="120" y="490" font-family="Inter, system-ui, -apple-system" font-size="20" font-weight="600" fill="#1d1d1f">
+    What made you smile today?
+  </text>
+</svg>
+
