@@ -153,8 +153,8 @@
         statusMessage.style.display = 'block';
 
         // Generate share text with card URL
-        const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
-        const cardUrl = `${appUrl}/card-view.html?date=${currentData.date}`;
+        const appUrl = import.meta.env.VITE_APP_URL || 'https://qnote-two.vercel.app';
+        const cardUrl = `${appUrl}/api/card-view?date=${currentData.date}&answer=${encodeURIComponent(currentData.text)}`;
         
         // Include URL in text for automatic link preview
         const shareText = `Daily Question 🌿
@@ -199,8 +199,8 @@ ${cardUrl}`;
         
         // Fallback: copy to clipboard
         try {
-          const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
-          const cardUrl = `${appUrl}/card-view.html?date=${currentData.date}`;
+          const appUrl = import.meta.env.VITE_APP_URL || 'https://qnote-two.vercel.app';
+          const cardUrl = `${appUrl}/api/card-view?date=${currentData.date}&answer=${encodeURIComponent(currentData.text)}`;
           const fallbackText = `Daily Question 🌿
 ${currentData.question}
 → ${currentData.text}
