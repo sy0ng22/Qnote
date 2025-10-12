@@ -9,8 +9,8 @@
   --text-secondary: #6B7280;
   --text-tertiary: #9CA3AF;
   --border-color: #E5E7EB;
-  --button-bg: #1A1A1A;
-  --button-hover: #2D2D2D;
+  --button-bg: white;
+  --button-hover: #f5f5f7;
   
   /* Spacing */
   --spacing-xs: 8px;
@@ -201,8 +201,8 @@ body {
   width: 100%;
   padding: 16px var(--spacing-lg);
   background: var(--button-bg);
-  color: white;
-  border: none;
+  color: #1A1A1A;
+  border: 1px solid #d2d2d7;
   border-radius: var(--radius-md);
   font-size: 15px;
   font-weight: 600;

@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Qnote - Monthly Calendar</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .home-button {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      padding: 12px 24px;
+      background: white;
+      color: #1A1A1A;
+      border: 1px solid #d2d2d7;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      z-index: 100;
+      transition: all 0.2s ease;
+    }
+
+    .home-button:hover {
+      background: #f5f5f7;
+      transform: translateY(-2px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .calendar-wrapper {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-xl);
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .calendar-inner {
+      background: white;
+      border-radius: var(--radius-md);
+      padding: 32px 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .month-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e8e8ea;
+    }
+
+    .month-nav button {
+      padding: 6px 12px;
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      min-width: 60px;
+    }
+
+    .month-nav button:hover {
+      background: rgba(0, 0, 0, 0.03);
+      color: var(--text-primary);
+      border-color: var(--text-secondary);
+    }
+
+    .current-month {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-align: center;
+      flex: 1;
+      letter-spacing: -0.3px;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      max-width: 100%;
+      margin: 0 auto;
+    }
+
+    .calendar-day-header {
+      text-align: center;
+      padding: 8px 0;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .calendar-day {
+      aspect-ratio: 1;
+      border: none;
+      border-radius: 0;
+      padding: 8px;
+      position: relative;
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      width: 100%;
+      height: 0;
+      padding-bottom: 100%;
+    }
+
+    .calendar-day:hover {
+      background: rgba(0, 0, 0, 0.02);
+    }
+
+    .calendar-day.empty {
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .calendar-day.today {
+      background: #f5f5f7;
+    }
+
+    .calendar-day.has-answer {
+      
+    }
+
+    .calendar-day.has-answer:hover {
+      background: rgba(0, 0, 0, 0.03);
+    }
+
+    .day-number {
+      position: absolute;
+      top: 4px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-primary);
+      z-index: 3;
+    }
+
+    .day-content {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding-top: 18px;
+    }
+
+    .card-thumbnail {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    .answer-indicator {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .answer-indicator img {
+      width: 100%;
+      height: 100%;
+      opacity: 0.8;
+    }
+
+    .answer-preview {
+      display: none;
+    }
+
+
+    /* Modal for answer detail */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .modal.active {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 24px;
+      padding: 32px;
+      max-width: 600px;
+      width: 100%;
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: none;
+      border: none;
+      font-size: 32px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    .modal-date {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .modal-question {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 24px;
+      line-height: 1.4;
+    }
+
+    .modal-answer {
+      font-size: 16px;
+      color: var(--text-primary);
+      line-height: 1.6;
+      margin-bottom: 24px;
+      padding: 20px;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .modal-button {
+      flex: 1;
+      padding: 14px 24px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .modal-button-primary {
+      background: white;
+      color: #1A1A1A;
+      border: 1px solid #d2d2d7;
+    }
+    
+    .modal-button-primary:hover {
+      background: #f5f5f7;
+    }
+
+    .modal-button-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid #d2d2d7;
+    }
+    
+    .modal-button-secondary:hover {
+      background: #e8e8ea;
+    }
+
+    @media (max-width: 768px) {
+      .calendar-grid {
+        gap: 4px;
+      }
+
+      .day-number {
+        font-size: 10px;
+        padding: 2px 5px;
+      }
+
+      .answer-indicator {
+        font-size: 18px;
+      }
+
+      .answer-preview {
+        font-size: 8px;
+        -webkit-line-clamp: 2;
+        padding: 2px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button class="home-button" onclick="location.href='/'">← Home</button>
+
+  <div class="container">
+    <!-- App Header -->
+    <header class="app-header">
+      <h1 class="app-title">Monthly Calendar</h1>
+      <p class="app-subtitle">Your reflections this month</p>
+    </header>
+
+    <!-- Main Content -->
+    <main class="content">
+      <!-- Calendar Card -->
+      <section class="calendar-wrapper">
+        <div class="calendar-inner">
+          <!-- Month Navigation -->
+          <div class="month-nav">
+            <button id="prevMonth">← Prev</button>
+            <div class="current-month" id="currentMonth">January 2024</div>
+            <button id="nextMonth">Next →</button>
+          </div>
+
+          <!-- Calendar Grid -->
+          <div class="calendar-grid" id="calendarGrid">
+            <!-- Calendar will be generated by JavaScript -->
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal for answer detail -->
+  <div class="modal" id="answerModal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">×</button>
+      <div class="modal-date" id="modalDate"></div>
+      <div class="modal-question" id="modalQuestion"></div>
+      <div class="modal-answer" id="modalAnswer"></div>
+      <div class="modal-actions">
+        <button class="modal-button modal-button-secondary" onclick="closeModal()">Close</button>
+        <button class="modal-button modal-button-primary" id="viewCardBtn">View Card →</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import dayjs from 'dayjs';
+    import { getQuestionForDate } from '/questions.js';
+    import { loadAnswer } from '/utils.js';
+
+    let currentDate = dayjs();
+
+    const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    function renderCalendar() {
+      const year = currentDate.year();
+      const month = currentDate.month();
+      
+      // Update month display
+      document.getElementById('currentMonth').textContent = currentDate.format('MMMM YYYY');
+
+      // Get calendar grid
+      const grid = document.getElementById('calendarGrid');
+      grid.innerHTML = '';
+
+      // Add day headers
+      dayHeaders.forEach(day => {
+        const header = document.createElement('div');
+        header.className = 'calendar-day-header';
+        header.textContent = day;
+        grid.appendChild(header);
+      });
+
+      // Get first day of month and total days
+      const firstDay = dayjs(new Date(year, month, 1));
+      const lastDay = dayjs(new Date(year, month + 1, 0));
+      const daysInMonth = lastDay.date();
+      const startDayOfWeek = firstDay.day();
+
+      // Add empty cells for days before month starts
+      for (let i = 0; i < startDayOfWeek; i++) {
+        const emptyDay = document.createElement('div');
+        emptyDay.className = 'calendar-day empty';
+        grid.appendChild(emptyDay);
+      }
+
+      // Add days of the month
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = dayjs(new Date(year, month, day)).format('YYYY-MM-DD');
+        const dayDiv = document.createElement('div');
+        dayDiv.className = 'calendar-day';
+        
+        // Check if it's today
+        if (dateStr === dayjs().format('YYYY-MM-DD')) {
+          dayDiv.classList.add('today');
+        }
+
+        // Check if there's an answer for this day
+        const answer = loadAnswer(dateStr);
+        
+        if (answer && answer.text) {
+          dayDiv.classList.add('has-answer');
+          
+          dayDiv.innerHTML = `
+            <div class="day-number">${day}</div>
+            <div class="day-content">
+              <div class="answer-indicator">
+                <img src="/qnote-logo.png?v=${Date.now()}" alt="Answered">
+              </div>
+            </div>
+          `;
+          
+          // Add click handler
+          dayDiv.onclick = () => showAnswerModal(dateStr, answer);
+        } else {
+          dayDiv.innerHTML = `
+            <div class="day-number">${day}</div>
+          `;
+        }
+
+        grid.appendChild(dayDiv);
+      }
+    }
+
+    function showAnswerModal(dateStr, answer) {
+      const modal = document.getElementById('answerModal');
+      const question = answer.question || getQuestionForDate(dateStr);
+      
+      document.getElementById('modalDate').textContent = dayjs(dateStr).format('MMMM D, YYYY dddd');
+      document.getElementById('modalQuestion').textContent = question;
+      document.getElementById('modalAnswer').textContent = answer.text;
+      
+      document.getElementById('viewCardBtn').onclick = () => {
+        location.href = '/card.html';
+      };
+      
+      modal.classList.add('active');
+    }
+
+    window.closeModal = function() {
+      document.getElementById('answerModal').classList.remove('active');
+    };
+
+    // Month navigation
+    document.getElementById('prevMonth').addEventListener('click', () => {
+      currentDate = currentDate.subtract(1, 'month');
+      renderCalendar();
+    });
+
+    document.getElementById('nextMonth').addEventListener('click', () => {
+      currentDate = currentDate.add(1, 'month');
+      renderCalendar();
+    });
+
+    // Close modal on background click
+    document.getElementById('answerModal').addEventListener('click', (e) => {
+      if (e.target.id === 'answerModal') {
+        closeModal();
+      }
+    });
+
+    // Initial render
+    renderCalendar();
+  </script>
+</body>
+</html>
+

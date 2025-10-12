@@ -1,0 +1,14 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Lobster+Two:wght@700&amp;display=swap');
+    </style>
+  </defs>
+  <text x="16" y="26" 
+        text-anchor="middle" 
+        font-family="'Lobster Two', cursive" 
+        font-weight="700" 
+        font-size="32" 
+        fill="#1d1d1f">Q</text>
+</svg>
+

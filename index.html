@@ -3,111 +3,151 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Qnote - Daily Question</title>
+  <title>Qnote - Daily Reflection</title>
   <link rel="stylesheet" href="/style.css">
-</head>
-<body>
-  <div class="container">
-    <!-- App Header -->
-    <header class="app-header">
-      <h1 class="app-title">Daily Question</h1>
-      <p class="app-subtitle">A moment to reflect, once a day</p>
-      <button 
-        onclick="localStorage.clear(); location.reload();" 
-        style="position: absolute; top: 16px; right: 16px; padding: 8px 16px; background: #f5f5f7; border: none; border-radius: 8px; font-size: 12px; cursor: pointer; color: #86868B;">
-        Clear Data
-      </button>
-    </header>
-
-    <!-- Date -->
-    <div class="date-display" id="dateDisplay">
-      October 11, 2025 Saturday
-    </div>
-
-    <!-- Main Content -->
-    <main class="content">
-      <!-- Question Section -->
-      <section class="question-section">
-        <div class="section-label">TODAY'S QUESTION</div>
-        <div class="question-text" id="questionText">When was your most peaceful moment?</div>
-      </section>
-
-      <!-- Answer Card Section -->
-      <section class="answer-card-wrapper">
-        <div class="answer-card">
-          <label class="input-label" for="answerInput">Your Answer</label>
-          <textarea 
-            class="textarea" 
-            id="answerInput" 
-            placeholder="Write freely..."
-            maxlength="500"
-          ></textarea>
-          <div class="char-counter">
-            <span id="charCount">0</span> / 500
-          </div>
-        </div>
-      </section>
-
-      <!-- Action Button -->
-      <button class="button" id="nextButton" disabled>
-        Create Card →
-      </button>
-    </main>
-  </div>
-
-  <script type="module">
-    import dayjs from 'dayjs';
-    import { getTodayQuestion } from '/questions.js';
-    import { saveAnswer, loadAnswer } from '/utils.js';
-
-    const dateDisplay = document.getElementById('dateDisplay');
-    const questionText = document.getElementById('questionText');
-    const answerInput = document.getElementById('answerInput');
-    const charCount = document.getElementById('charCount');
-    const nextButton = document.getElementById('nextButton');
-
-    // Get today's date and question
-    const { question, date } = getTodayQuestion();
-    
-    // Display date
-    dateDisplay.textContent = dayjs(date).format('MMMM D, YYYY dddd');
-    
-    // Display question
-    questionText.textContent = question;
-
-    // Update character count
-    function updateCharCount() {
-      const count = answerInput.value.length;
-      charCount.textContent = count;
-      nextButton.disabled = count === 0;
+  <style>
+    .home-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
     }
 
-    answerInput.addEventListener('input', updateCharCount);
+    .home-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
 
-    // Next step
-    nextButton.addEventListener('click', () => {
-      const answer = answerInput.value.trim();
+    .home-logo {
+      font-size: 64px;
+      margin-bottom: 24px;
+    }
+
+    .home-title {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      letter-spacing: -1px;
+    }
+
+    .home-subtitle {
+      font-size: 18px;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    .home-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .home-button {
+      padding: 24px 32px;
+      font-size: 20px;
+      font-weight: 600;
+      border-radius: var(--radius-lg);
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-align: left;
+    }
+
+    .home-button-primary {
+      background: white;
+      color: #1A1A1A;
+      border: 1px solid #d2d2d7;
+    }
+
+    .home-button-primary:hover:not(:disabled) {
+      background: #f5f5f7;
+      transform: translateY(-2px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .home-button-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .button-content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .button-title {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .button-description {
+      font-size: 14px;
+      font-weight: 400;
+      opacity: 0.8;
+    }
+
+    .button-icon {
+      font-size: 24px;
+    }
+
+    .coming-soon {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      margin-left: 8px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="home-container">
+    <!-- Header -->
+    <div class="home-header">
+      <div class="home-logo">🌿</div>
+      <h1 class="home-title">Qnote</h1>
+      <p class="home-subtitle">Daily reflection, one question at a time</p>
       
-      if (!answer) {
-        alert('Please enter your answer.');
-        return;
-      }
+      <!-- Dev Reset Button -->
+      <button 
+        onclick="if(confirm('Clear all data?')) { localStorage.clear(); alert('Data cleared!'); }" 
+        style="margin-top: 20px; padding: 8px 16px; background: #ff4444; color: white; border: none; border-radius: 8px; font-size: 12px; cursor: pointer;">
+        🔄 Reset Data (Dev)
+      </button>
+    </div>
 
-      // Save data
-      const data = {
-        question,
-        text: answer,
-        date
-      };
+    <!-- Actions -->
+    <div class="home-actions">
+      <!-- Daily Button -->
+      <button class="home-button home-button-primary" onclick="location.href='/daily.html'">
+        <div class="button-content">
+          <div class="button-title">Daily Question</div>
+          <div class="button-description">Answer today's question</div>
+        </div>
+        <div class="button-icon">→</div>
+      </button>
 
-      saveAnswer(date, data);
-
-      // Go to card creation page
-      location.href = '/card.html';
-    });
-
-    // Initial state check
-    updateCharCount();
-  </script>
+      <!-- Monthly Button -->
+      <button class="home-button home-button-primary" onclick="location.href='/monthly.html'">
+        <div class="button-content">
+          <div class="button-title">Monthly Calendar</div>
+          <div class="button-description">View this month's reflections</div>
+        </div>
+        <div class="button-icon">→</div>
+      </button>
+    </div>
+  </div>
 </body>
 </html>
