@@ -6,27 +6,6 @@
   <title>Qnote - Monthly Calendar</title>
   <link rel="stylesheet" href="/style.css">
   <style>
-    .home-button {
-      position: fixed;
-      top: 24px;
-      left: 24px;
-      padding: 12px 24px;
-      background: white;
-      color: #1A1A1A;
-      border: 1px solid #d2d2d7;
-      border-radius: 12px;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: 600;
-      z-index: 100;
-      transition: all 0.2s ease;
-    }
-
-    .home-button:hover {
-      background: #f5f5f7;
-      transform: translateY(-2px);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
 
     .calendar-wrapper {
       background: var(--bg-secondary);
@@ -313,9 +292,13 @@
   </style>
 </head>
 <body>
-  <button class="home-button" onclick="location.href='/'">← Home</button>
-
   <div class="container">
+    <!-- Navigation -->
+    <nav class="nav-bar">
+      <button class="nav-button" onclick="location.href='/'">← Home</button>
+      <div style="flex: 1;"></div>
+    </nav>
+
     <!-- App Header -->
     <header class="app-header">
       <h1 class="app-title">Monthly Calendar</h1>
@@ -359,12 +342,89 @@
 
   <script type="module">
     import dayjs from 'dayjs';
+    import sdk from '@farcaster/frame-sdk';
     import { getQuestionForDate } from '/questions.js';
-    import { loadAnswer } from '/utils.js';
+    import { fetchUserCasts, parseDailyCast } from '/utils.js';
 
     let currentDate = dayjs();
+    let farcasterDates = new Set(); // Farcaster에 공유된 날짜 저장
 
     const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    // Initialize Farcaster SDK
+    sdk.actions.ready();
+
+    // Farcaster에서 공유된 날짜 가져오기
+    async function loadFarcasterDates() {
+      try {
+        let fid;
+        
+        // Farcaster SDK에서 자동으로 사용자 정보 가져오기
+        try {
+          const context = await sdk.context;
+          
+          if (context && context.user) {
+            fid = context.user.fid;
+            console.log('✅ Auto-detected FID from Farcaster:', fid);
+          }
+        } catch (e) {
+          console.log('Not in Farcaster context');
+        }
+        
+        // 폴백: 로컬 테스트용 - localStorage나 프롬프트
+        if (!fid) {
+          const savedFid = localStorage.getItem('qnote:test-fid');
+          if (savedFid) {
+            fid = savedFid;
+            console.log('📝 Using saved test FID:', fid);
+          } else {
+            fid = prompt('로컬 테스트: Farcaster ID (FID) 입력:');
+            if (fid) {
+              localStorage.setItem('qnote:test-fid', fid);
+              console.log('💾 Saved test FID for local testing');
+            } else {
+              console.log('❌ No FID provided');
+              return;
+            }
+          }
+        }
+
+        if (!fid) {
+          console.log('❌ No FID available');
+          return;
+        }
+        
+        // Neynar API로 캐스트 가져오기
+        const casts = await fetchUserCasts(fid);
+        
+        console.log('Fetched casts:', casts.length);
+        
+        // #DailyQuestion 태그가 있는 캐스트만 필터링
+        const dailyQuestionCasts = casts.filter(cast => {
+          const text = cast.text || '';
+          return text.includes('#DailyQuestion') || text.includes('DQ:');
+        });
+
+        console.log('Daily Question casts:', dailyQuestionCasts.length);
+        
+        // 날짜 추출
+        dailyQuestionCasts.forEach(cast => {
+          const data = parseDailyCast(cast);
+          if (data && data.date) {
+            farcasterDates.add(data.date);
+            console.log('Found shared date:', data.date);
+          }
+        });
+
+        console.log('Total unique dates:', farcasterDates.size);
+        
+        // 캘린더 다시 렌더링
+        renderCalendar();
+        
+      } catch (error) {
+        console.error('Failed to load Farcaster data:', error);
+      }
+    }
 
     function renderCalendar() {
       const year = currentDate.year();
@@ -409,10 +469,10 @@
           dayDiv.classList.add('today');
         }
 
-        // Check if there's an answer for this day
-        const answer = loadAnswer(dateStr);
+        // ✅ Farcaster에 공유된 날짜인지 확인
+        const isShared = farcasterDates.has(dateStr);
         
-        if (answer && answer.text) {
+        if (isShared) {
           dayDiv.classList.add('has-answer');
           
           dayDiv.innerHTML = `
@@ -475,6 +535,9 @@
 
     // Initial render
     renderCalendar();
+    
+    // Load Farcaster data
+    loadFarcasterDates();
   </script>
 </body>
 </html>

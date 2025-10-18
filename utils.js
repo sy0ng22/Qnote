@@ -178,3 +178,180 @@ export function downloadImage(dataUrl, filename) {
   document.body.removeChild(link);
 }
 
+// Convert data URL to Blob
+export function dataURLtoBlob(dataURL) {
+  const parts = dataURL.split(',');
+  const mime = parts[0].match(/:(.*?);/)[1];
+  const bstr = atob(parts[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new Blob([u8arr], { type: mime });
+}
+
+// Upload image to IPFS using NFT.Storage (free)
+export async function uploadToIPFS(imageDataUrl, metadata) {
+  try {
+    // NFT.Storage API 키 필요
+    const apiKey = import.meta.env.VITE_NFT_STORAGE_API_KEY;
+    
+    if (!apiKey) {
+      throw new Error('NFT.Storage API key not configured');
+    }
+
+    // 이미지를 Blob으로 변환
+    const imageBlob = dataURLtoBlob(imageDataUrl);
+    
+    // NFT.Storage에 업로드
+    const formData = new FormData();
+    formData.append('file', imageBlob, 'card.png');
+    
+    const uploadResponse = await fetch('https://api.nft.storage/upload', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: imageBlob
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error('Failed to upload to IPFS');
+    }
+
+    const uploadData = await uploadResponse.json();
+    const imageUrl = `https://ipfs.io/ipfs/${uploadData.value.cid}`;
+
+    // 메타데이터 생성
+    const nftMetadata = {
+      name: metadata.name || 'Qnote Daily Question Card',
+      description: metadata.description || `Daily Question: ${metadata.question}`,
+      image: imageUrl,
+      attributes: [
+        {
+          trait_type: 'Date',
+          value: metadata.date
+        },
+        {
+          trait_type: 'Question',
+          value: metadata.question
+        },
+        {
+          trait_type: 'Type',
+          value: 'Daily Reflection'
+        }
+      ]
+    };
+
+    // 메타데이터도 IPFS에 업로드
+    const metadataBlob = new Blob([JSON.stringify(nftMetadata)], { 
+      type: 'application/json' 
+    });
+    
+    const metadataResponse = await fetch('https://api.nft.storage/upload', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: metadataBlob
+    });
+
+    if (!metadataResponse.ok) {
+      throw new Error('Failed to upload metadata to IPFS');
+    }
+
+    const metadataData = await metadataResponse.json();
+    const metadataUrl = `https://ipfs.io/ipfs/${metadataData.value.cid}`;
+
+    return {
+      imageUrl,
+      metadataUrl,
+      metadata: nftMetadata
+    };
+  } catch (error) {
+    console.error('IPFS upload error:', error);
+    throw error;
+  }
+}
+
+// 이 함수는 더 이상 사용하지 않음 - MintClub으로 대체됨
+
+// MintClub을 통한 NFT 직접 민팅 (Farcaster 지갑 사용)
+export async function mintNFTWithMintClub(sdk, imageUrl, metadata) {
+  try {
+    // 1. Farcaster context 가져오기
+    const context = await sdk.context;
+    
+    if (!context || !context.user) {
+      throw new Error('Farcaster wallet not connected');
+    }
+
+    // 2. 사용자 지갑 주소
+    const userAddress = context.user.verifiedAddresses?.[0] || context.user.custodyAddress;
+    
+    if (!userAddress) {
+      throw new Error('Please connect a wallet in Farcaster settings');
+    }
+
+    // 3. MintClub SDK를 통한 NFT 민팅
+    // MintClub은 bonding curve 기반으로 토큰/NFT를 생성
+    const { encodeFunctionData } = await import('viem');
+    
+    // MintClub의 NFT 생성 컨트랙트 호출
+    // Base 네트워크의 MintClub Factory
+    const MINTCLUB_FACTORY = '0x...'; // MintClub Base 컨트랙트
+    
+    const calldata = encodeFunctionData({
+      abi: [{
+        name: 'createNFT',
+        type: 'function',
+        stateMutability: 'payable',
+        inputs: [
+          { name: 'name', type: 'string' },
+          { name: 'symbol', type: 'string' },
+          { name: 'tokenURI', type: 'string' }
+        ],
+        outputs: [{ name: 'nftAddress', type: 'address' }]
+      }],
+      functionName: 'createNFT',
+      args: [
+        metadata.name,
+        'QNOTE',
+        imageUrl // IPFS URL
+      ]
+    });
+
+    // 4. Farcaster SDK로 트랜잭션 전송
+    const txData = {
+      chainId: 'eip155:8453', // Base network
+      method: 'eth_sendTransaction',
+      params: {
+        to: MINTCLUB_FACTORY,
+        value: '0',
+        data: calldata
+      }
+    };
+
+    const result = await sdk.actions.sendTransaction(txData);
+    
+    return {
+      success: true,
+      txHash: result.transactionHash,
+      userAddress,
+      network: 'Base'
+    };
+  } catch (error) {
+    console.error('MintClub minting error:', error);
+    throw error;
+  }
+}
+
+// Warpcast에서 NFT 공유
+export function shareNFTOnWarpcast(nftUrl, description) {
+  const text = encodeURIComponent(`${description}\n\n🎨 Minted on Base with MintClub`);
+  const embedUrl = encodeURIComponent(nftUrl);
+  const composeUrl = `https://warpcast.com/~/compose?text=${text}&embeds[]=${embedUrl}`;
+  window.open(composeUrl, '_blank');
+}
+

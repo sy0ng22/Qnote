@@ -46,7 +46,7 @@
           <svg class="share-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
-          Mint as NFT
+          <span id="nftButtonText">Mint as NFT</span>
         </button>
       </div>
     </main>
@@ -69,9 +69,13 @@
     const statusMessage = document.getElementById('statusMessage');
     const shareButton = document.getElementById('shareButton');
     const nftButton = document.getElementById('nftButton');
+    const nftButtonText = document.getElementById('nftButtonText');
 
     let currentData = null;
     let isGenerating = false;
+
+    // Initialize Farcaster SDK
+    sdk.actions.ready();
 
     // Load data
     function loadData() {
@@ -147,14 +151,18 @@
           await generateCard();
         }
 
-        // Show opening message
-        statusMessage.textContent = '✓ Opening Farcaster...';
-        statusMessage.className = 'success';
-        statusMessage.style.display = 'block';
-
         // Generate share text with card URL
         const appUrl = import.meta.env.VITE_APP_URL || 'https://qnote-two.vercel.app';
         const cardUrl = `${appUrl}/api/card-view?date=${currentData.date}&answer=${encodeURIComponent(currentData.text)}`;
+        
+        // Show current card image as preview (로컬에서도 보임)
+        statusMessage.innerHTML = `
+          <strong>✓ Card ready to share!</strong><br>
+          <small style="display: block; margin-top: 8px;">This is what will appear on Farcaster:</small>
+          <img src="${currentData.imgUrl}" style="width: 100%; max-width: 400px; border-radius: 8px; margin-top: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" alt="Card Preview" />
+        `;
+        statusMessage.className = 'success';
+        statusMessage.style.display = 'block';
         
         // Share text without URL (URL will be in embeds)
         const shareText = `Daily Question 🌿
@@ -221,14 +229,98 @@ ${currentData.question}
     });
 
     // Mint NFT button
-    nftButton.addEventListener('click', () => {
-      statusMessage.textContent = 'NFT minting feature coming soon! 🎉';
-      statusMessage.className = 'success';
-      statusMessage.style.display = 'block';
-      
-      setTimeout(() => {
-        statusMessage.style.display = 'none';
-      }, 3000);
+    nftButton.addEventListener('click', async () => {
+      try {
+        nftButton.disabled = true;
+        nftButtonText.textContent = 'Preparing...';
+        statusMessage.textContent = '🎨 Preparing to mint NFT...';
+        statusMessage.className = 'loading';
+        statusMessage.style.display = 'block';
+
+        // Generate image if not exists
+        if (!currentData.imgUrl) {
+          await generateCard();
+        }
+
+        // Import NFT utilities dynamically
+        const { uploadToIPFS, mintNFTWithMintClub, saveAnswer } = await import('/utils.js');
+        
+        // Step 1: Check Farcaster wallet
+        statusMessage.textContent = '🔐 Connecting to Farcaster wallet...';
+        nftButtonText.textContent = 'Connecting...';
+        
+        let farcasterAvailable = false;
+        try {
+          const context = await sdk.context;
+          farcasterAvailable = !!(context && context.user);
+        } catch (e) {
+          throw new Error('This feature only works in Farcaster. Please open this app in Warpcast.');
+        }
+
+        if (!farcasterAvailable) {
+          throw new Error('Farcaster wallet not detected. Please open this app in Warpcast.');
+        }
+
+        const metadata = {
+          name: `Qnote Daily Question - ${currentData.date}`,
+          description: `Daily Question: ${currentData.question}\nAnswer: ${currentData.text}`,
+          question: currentData.question,
+          date: currentData.date
+        };
+        
+        // Check if NFT.Storage API key is configured
+        const hasNFTStorageKey = import.meta.env.VITE_NFT_STORAGE_API_KEY;
+        
+        if (!hasNFTStorageKey) {
+          throw new Error('NFT.Storage API key is required. Please add VITE_NFT_STORAGE_API_KEY to your .env file.');
+        }
+
+        // Step 2: Upload to IPFS
+        statusMessage.textContent = '📤 Uploading to IPFS...';
+        nftButtonText.textContent = 'Uploading...';
+        
+        const ipfsData = await uploadToIPFS(currentData.imgUrl, metadata);
+        
+        // Save IPFS data
+        currentData.ipfsUrl = ipfsData.imageUrl;
+        currentData.metadataUrl = ipfsData.metadataUrl;
+        saveAnswer(currentData.date, currentData);
+        
+        statusMessage.innerHTML = `
+          <strong>✓ Uploaded to IPFS!</strong><br>
+          <small><a href="${ipfsData.imageUrl}" target="_blank" style="color: inherit; text-decoration: underline;">View on IPFS</a></small>
+        `;
+        
+        // Step 3: Mint NFT on blockchain with MintClub
+        statusMessage.innerHTML = `
+          <strong>🎨 Minting NFT on Base...</strong><br>
+          <small>Please approve the transaction in your wallet</small>
+        `;
+        nftButtonText.textContent = 'Minting...';
+        
+        const mintResult = await mintNFTWithMintClub(sdk, ipfsData.imageUrl, metadata);
+        
+        // Success!
+        statusMessage.innerHTML = `
+          <strong>🎉 NFT Minted Successfully!</strong><br>
+          <small>Network: ${mintResult.network}</small><br>
+          <small>Tx: <a href="https://basescan.org/tx/${mintResult.txHash}" target="_blank" style="color: inherit; text-decoration: underline;">${mintResult.txHash.substring(0, 10)}...</a></small><br>
+          <small>Your NFT is now on the blockchain! 🚀</small>
+        `;
+        statusMessage.className = 'success';
+        nftButtonText.textContent = '✓ Minted!';
+
+      } catch (error) {
+        console.error('NFT minting failed:', error);
+        statusMessage.innerHTML = `
+          <strong>⚠️ Minting preparation failed</strong><br>
+          <small>${error.message || 'Please try again'}</small>
+        `;
+        statusMessage.className = 'error';
+      } finally {
+        nftButton.disabled = false;
+        nftButtonText.textContent = 'Mint as NFT';
+      }
     });
 
     // Load data on page load

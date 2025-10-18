@@ -5,34 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Qnote - Daily Question</title>
   <link rel="stylesheet" href="/style.css">
-  <style>
-    .home-button {
-      position: fixed;
-      top: 24px;
-      left: 24px;
-      padding: 12px 24px;
-      background: white;
-      color: #1A1A1A;
-      border: 1px solid #d2d2d7;
-      border-radius: 12px;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: 600;
-      z-index: 100;
-      transition: all 0.2s ease;
-    }
-
-    .home-button:hover {
-      background: #f5f5f7;
-      transform: translateY(-2px);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    }
-  </style>
 </head>
 <body>
-  <button class="home-button" onclick="location.href='/'">← Home</button>
-  
   <div class="container">
+    <!-- Navigation -->
+    <nav class="nav-bar">
+      <button class="nav-button" onclick="location.href='/'">← Home</button>
+      <div style="flex: 1;"></div>
+    </nav>
+
+    <div class="container">
     <!-- App Header -->
     <header class="app-header">
       <h1 class="app-title">Daily Question</h1>
