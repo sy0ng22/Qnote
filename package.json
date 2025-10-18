@@ -14,8 +14,7 @@
     "dayjs": "^1.11.10",
     "html2canvas": "^1.4.1",
     "nft.storage": "^7.1.1",
-    "viem": "^2.7.0",
-    "@mint.club/sdk": "^1.0.0"
+    "viem": "^2.7.0"
   },
   "devDependencies": {
     "vite": "^5.0.0"
