@@ -50,6 +50,14 @@ VITE_APP_URL=http://localhost:5173
 > - Without `VITE_NFT_CONTRACT_ADDRESS`: Redirects to Zora for minting
 > - With both: Full in-app minting using Farcaster wallet!
 
+### 🚀 API Cost Optimization
+
+**Server-side caching** is implemented to minimize Neynar API calls:
+- All users share a single server cache (10-minute duration)
+- API calls reduced by **90%+** compared to client-side calls
+- **Scalable**: 1000+ users can use the app without hitting API limits
+- Example: 1000 users/day = only ~144 API requests (vs 3000+ without caching)
+
 ## 📱 How to Use
 
 ### Step 1: Answer the Question

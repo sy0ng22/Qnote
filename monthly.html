@@ -344,7 +344,7 @@
     import dayjs from 'dayjs';
     import sdk from '@farcaster/frame-sdk';
     import { getQuestionForDate } from '/questions.js';
-    import { fetchUserCasts, parseDailyCast } from '/utils.js';
+    // fetchUserCasts, parseDailyCast는 더 이상 사용 안 함 (서버에서 처리)
 
     let currentDate = dayjs();
     let farcasterDates = new Set(); // Farcaster에 공유된 날짜 저장
@@ -394,54 +394,36 @@
           return;
         }
         
-        // 🔥 캐싱: 10분마다만 API 호출 (API 한도 절약)
-        const cacheKey = `qnote:farcaster-dates:${fid}`;
-        const cacheTimeKey = `qnote:farcaster-dates-time:${fid}`;
-        const cachedDates = localStorage.getItem(cacheKey);
-        const cachedTime = localStorage.getItem(cacheTimeKey);
-        const now = Date.now();
-        const CACHE_DURATION = 10 * 60 * 1000; // 10분
+        // 🔥 서버 캐싱: Vercel Function으로 API 호출 최소화
+        // 모든 사용자가 서버 캐시를 공유하므로 API 비용 대폭 절감!
+        console.log('🌐 Fetching dates from server...');
         
-        // 캐시가 유효하면 API 호출 안 함
-        if (cachedDates && cachedTime && (now - parseInt(cachedTime)) < CACHE_DURATION) {
-          console.log('📦 Using cached data (API call skipped)');
-          const dates = JSON.parse(cachedDates);
-          dates.forEach(date => farcasterDates.add(date));
-          console.log('Total unique dates (cached):', farcasterDates.size);
-          renderCalendar();
+        const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+        const response = await fetch(`${appUrl}/api/farcaster-dates?fid=${fid}`);
+        
+        if (!response.ok) {
+          if (response.status === 402) {
+            console.error('⚠️ Neynar API limit exceeded');
+            alert('API 한도가 초과되었습니다. 관리자에게 문의해주세요.');
+          } else {
+            console.error('Failed to fetch dates:', response.status);
+          }
           return;
         }
         
-        console.log('🌐 Fetching fresh data from API...');
+        const data = await response.json();
+        const dates = data.dates || [];
         
-        // Neynar API로 캐스트 가져오기
-        const casts = await fetchUserCasts(fid);
+        console.log(`📅 Received ${dates.length} dates from server`);
+        console.log(`${data.cached ? '📦 (from cache)' : '🌐 (fresh from API)'}`);
         
-        console.log('Fetched casts:', casts.length);
+        if (data.cached) {
+          console.log(`⏱️ Cache age: ${data.cacheAge}s`);
+        }
         
-        // #DailyQuestion 태그가 있는 캐스트만 필터링
-        const dailyQuestionCasts = casts.filter(cast => {
-          const text = cast.text || '';
-          return text.includes('#DailyQuestion') || text.includes('DQ:');
-        });
-
-        console.log('Daily Question casts:', dailyQuestionCasts.length);
-        
-        // 날짜 추출
-        dailyQuestionCasts.forEach(cast => {
-          const data = parseDailyCast(cast);
-          if (data && data.date) {
-            farcasterDates.add(data.date);
-            console.log('Found shared date:', data.date);
-          }
-        });
-
+        // 날짜를 Set에 추가
+        dates.forEach(date => farcasterDates.add(date));
         console.log('Total unique dates:', farcasterDates.size);
-        
-        // 캐시 저장
-        localStorage.setItem(cacheKey, JSON.stringify(Array.from(farcasterDates)));
-        localStorage.setItem(cacheTimeKey, now.toString());
-        console.log('💾 Data cached for 10 minutes');
         
         // 캘린더 다시 렌더링
         renderCalendar();
