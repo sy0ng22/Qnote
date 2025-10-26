@@ -423,7 +423,14 @@
         
         // 날짜를 Set에 추가
         dates.forEach(date => farcasterDates.add(date));
-        console.log('Total unique dates:', farcasterDates.size);
+        console.log('📍 FID used:', fid);
+        console.log('📅 Total unique dates:', farcasterDates.size);
+        console.log('📋 Dates list:', Array.from(farcasterDates));
+        
+        // 디버깅: 화면에도 표시
+        if (dates.length === 0) {
+          console.warn('⚠️ No dates found! Check if you shared with #DailyQuestion and DQ:date format');
+        }
         
         // 캘린더 다시 렌더링
         renderCalendar();
