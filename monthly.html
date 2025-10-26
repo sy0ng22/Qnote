@@ -354,7 +354,7 @@
     // Initialize Farcaster SDK
     sdk.actions.ready();
 
-    // Farcaster에서 공유된 날짜 가져오기
+    // Farcaster에서 공유된 날짜 가져오기 (캐싱 추가로 API 호출 최소화)
     async function loadFarcasterDates() {
       try {
         let fid;
@@ -394,6 +394,26 @@
           return;
         }
         
+        // 🔥 캐싱: 10분마다만 API 호출 (API 한도 절약)
+        const cacheKey = `qnote:farcaster-dates:${fid}`;
+        const cacheTimeKey = `qnote:farcaster-dates-time:${fid}`;
+        const cachedDates = localStorage.getItem(cacheKey);
+        const cachedTime = localStorage.getItem(cacheTimeKey);
+        const now = Date.now();
+        const CACHE_DURATION = 10 * 60 * 1000; // 10분
+        
+        // 캐시가 유효하면 API 호출 안 함
+        if (cachedDates && cachedTime && (now - parseInt(cachedTime)) < CACHE_DURATION) {
+          console.log('📦 Using cached data (API call skipped)');
+          const dates = JSON.parse(cachedDates);
+          dates.forEach(date => farcasterDates.add(date));
+          console.log('Total unique dates (cached):', farcasterDates.size);
+          renderCalendar();
+          return;
+        }
+        
+        console.log('🌐 Fetching fresh data from API...');
+        
         // Neynar API로 캐스트 가져오기
         const casts = await fetchUserCasts(fid);
         
@@ -417,6 +437,11 @@
         });
 
         console.log('Total unique dates:', farcasterDates.size);
+        
+        // 캐시 저장
+        localStorage.setItem(cacheKey, JSON.stringify(Array.from(farcasterDates)));
+        localStorage.setItem(cacheTimeKey, now.toString());
+        console.log('💾 Data cached for 10 minutes');
         
         // 캘린더 다시 렌더링
         renderCalendar();
